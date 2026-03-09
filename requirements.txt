@@ -1,4 +1,4 @@
-streamlit==1.37.1
+streamlit>=1.44
 pillow==10.3.0
 
 langchain==0.2.16
