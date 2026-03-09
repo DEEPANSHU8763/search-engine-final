@@ -6,11 +6,10 @@ from langchain_community.tools import (
     WikipediaQueryRun,
     DuckDuckGoSearchResults,
 )
-from langgraph.prebuilt import create_react_agent
 
-# -----------------------
+# -------------------
 # Streamlit UI
-# -----------------------
+# -------------------
 
 st.title("🔎 AI Research Assistant")
 
@@ -21,23 +20,30 @@ if not api_key:
     st.info("Please enter your Groq API key in the sidebar.")
     st.stop()
 
-# -----------------------
-# Tools
-# -----------------------
+# -------------------
+# LLM
+# -------------------
 
-arxiv_wrapper = ArxivAPIWrapper(top_k_results=1, doc_content_chars_max=250)
-arxiv = ArxivQueryRun(api_wrapper=arxiv_wrapper)
+llm = ChatGroq(
+    api_key=api_key,
+    model="llama-3.3-70b-versatile",
+)
+
+# -------------------
+# Tools
+# -------------------
+
+search = DuckDuckGoSearchResults()
 
 wiki_wrapper = WikipediaAPIWrapper(top_k_results=1, doc_content_chars_max=250)
 wiki = WikipediaQueryRun(api_wrapper=wiki_wrapper)
 
-search = DuckDuckGoSearchResults()
+arxiv_wrapper = ArxivAPIWrapper(top_k_results=1, doc_content_chars_max=250)
+arxiv = ArxivQueryRun(api_wrapper=arxiv_wrapper)
 
-tools = [search, arxiv, wiki]
-
-# -----------------------
+# -------------------
 # Chat memory
-# -----------------------
+# -------------------
 
 if "messages" not in st.session_state:
     st.session_state.messages = [
@@ -50,32 +56,47 @@ if "messages" not in st.session_state:
 for msg in st.session_state.messages:
     st.chat_message(msg["role"]).write(msg["content"])
 
-# -----------------------
-# User input
-# -----------------------
+# -------------------
+# User Input
+# -------------------
 
 if prompt := st.chat_input("Ask something..."):
 
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.chat_message("user").write(prompt)
 
-    llm = ChatGroq(
-        api_key=api_key,
-        model="llama-3.3-70b-versatile",
-    )
-
-    agent = create_react_agent(llm, tools)
-
     with st.chat_message("assistant"):
 
         with st.spinner("Searching..."):
 
             try:
-                result = agent.invoke(
-                    {"messages": [{"role": "user", "content": prompt}]}
-                )
+                # Search the web
+                web_result = search.run(prompt)
 
-                output = result["messages"][-1].content
+                # Wikipedia
+                wiki_result = wiki.run(prompt)
+
+                # Arxiv
+                arxiv_result = arxiv.run(prompt)
+
+                context = f"""
+                Web Search Result:
+                {web_result}
+
+                Wikipedia Result:
+                {wiki_result}
+
+                Arxiv Result:
+                {arxiv_result}
+
+                User Question:
+                {prompt}
+
+                Using the information above, give a helpful answer.
+                """
+
+                response = llm.invoke(context)
+                output = response.content
 
             except Exception as e:
                 st.error(e)
