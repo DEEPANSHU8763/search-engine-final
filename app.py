@@ -6,11 +6,11 @@ from langchain_community.tools import (
     WikipediaQueryRun,
     DuckDuckGoSearchResults,
 )
-from langgraph.prebuilt import create_react_agent
+from langgraph.prebuilt import create_tool_calling_agent
 
-# ---------------------------
+# -----------------------
 # Streamlit UI
-# ---------------------------
+# -----------------------
 
 st.title("🔎 AI Research Assistant")
 
@@ -18,12 +18,12 @@ st.sidebar.title("Settings")
 api_key = st.sidebar.text_input("Enter Groq API Key", type="password")
 
 if not api_key:
-    st.info("Please enter your Groq API key in the sidebar to continue.")
+    st.info("Please enter your Groq API key in the sidebar.")
     st.stop()
 
-# ---------------------------
+# -----------------------
 # Tools
-# ---------------------------
+# -----------------------
 
 arxiv_wrapper = ArxivAPIWrapper(top_k_results=1, doc_content_chars_max=250)
 arxiv = ArxivQueryRun(api_wrapper=arxiv_wrapper)
@@ -35,9 +35,9 @@ search = DuckDuckGoSearchResults()
 
 tools = [search, arxiv, wiki]
 
-# ---------------------------
-# Chat memory
-# ---------------------------
+# -----------------------
+# Chat Memory
+# -----------------------
 
 if "messages" not in st.session_state:
     st.session_state.messages = [
@@ -50,23 +50,22 @@ if "messages" not in st.session_state:
 for msg in st.session_state.messages:
     st.chat_message(msg["role"]).write(msg["content"])
 
-# ---------------------------
+# -----------------------
 # User Input
-# ---------------------------
+# -----------------------
 
 if prompt := st.chat_input("Ask something..."):
 
     st.session_state.messages.append({"role": "user", "content": prompt})
     st.chat_message("user").write(prompt)
 
-    # LLM
     llm = ChatGroq(
         api_key=api_key,
         model="llama-3.3-70b-versatile",
     )
 
-    # Create agent
-    agent = create_react_agent(llm, tools)
+    # Tool-calling agent
+    agent = create_tool_calling_agent(llm, tools)
 
     with st.chat_message("assistant"):
 
