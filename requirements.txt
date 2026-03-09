@@ -1,4 +1,5 @@
 streamlit==1.37.1
+pillow==10.3.0
 
 langchain==0.2.16
 langchain-core==0.2.38
