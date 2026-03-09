@@ -3,7 +3,7 @@ streamlit
 ipykernel
 
 langchain==0.2.16
-langchain-core0.2.38
+langchain-core==0.2.38
 langchain-community==0.2.16
 langchain-groq
 langchain-chroma
