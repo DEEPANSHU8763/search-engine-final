@@ -6,7 +6,7 @@ from langchain_community.tools import (
     WikipediaQueryRun,
     DuckDuckGoSearchResults,
 )
-from langgraph.prebuilt import create_tool_calling_agent
+from langgraph.prebuilt import create_react_agent
 
 # -----------------------
 # Streamlit UI
@@ -36,7 +36,7 @@ search = DuckDuckGoSearchResults()
 tools = [search, arxiv, wiki]
 
 # -----------------------
-# Chat Memory
+# Chat memory
 # -----------------------
 
 if "messages" not in st.session_state:
@@ -51,7 +51,7 @@ for msg in st.session_state.messages:
     st.chat_message(msg["role"]).write(msg["content"])
 
 # -----------------------
-# User Input
+# User input
 # -----------------------
 
 if prompt := st.chat_input("Ask something..."):
@@ -64,8 +64,7 @@ if prompt := st.chat_input("Ask something..."):
         model="llama-3.3-70b-versatile",
     )
 
-    # Tool-calling agent
-    agent = create_tool_calling_agent(llm, tools)
+    agent = create_react_agent(llm, tools)
 
     with st.chat_message("assistant"):
 
@@ -79,7 +78,7 @@ if prompt := st.chat_input("Ask something..."):
                 output = result["messages"][-1].content
 
             except Exception as e:
-                st.error(f"Error: {e}")
+                st.error(e)
                 st.stop()
 
         st.session_state.messages.append(
